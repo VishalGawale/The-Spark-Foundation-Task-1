@@ -1,129 +1,69 @@
-# Byte-compiled / optimized / DLL files
-__pycache__/
-*.py[cod]
-*$py.class
+# # pip install pandas opencv-python
 
-# C extensions
-*.so
+import cv2
+import pandas as pd
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+# --------------------------------------------------------------------------
 
-# PyInstaller
-#  Usually these files are written by a python script from a template
-#  before PyInstaller builds the exe, so as to inject date/other infos into it.
-*.manifest
-*.spec
+img_path = 'pic3.jpg'
+csv_path = 'colors.csv'
 
-# Installer logs
-pip-log.txt
-pip-delete-this-directory.txt
+# reading csv file
+index = ['color', 'color_name', 'hex', 'R', 'G', 'B']
+df = pd.read_csv(csv_path, names=index, header=None)
 
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
+# reading image
+img = cv2.imread(img_path)
+img = cv2.resize(img, (800,600))
 
-# Translations
-*.mo
-*.pot
+#declaring global variables
+clicked = False
+r = g = b = xpos = ypos = 0
 
-# Django stuff:
-*.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
+#function to calculate minimum distance from all colors and get the most matching color
+def get_color_name(R,G,B):
+	minimum = 1000
+	for i in range(len(df)):
+		d = abs(R - int(df.loc[i,'R'])) + abs(G - int(df.loc[i,'G'])) + abs(B - int(df.loc[i,'B']))
+		if d <= minimum:
+			minimum = d
+			cname = df.loc[i, 'color_name']
 
-# Flask stuff:
-instance/
-.webassets-cache
+	return cname
 
-# Scrapy stuff:
-.scrapy
+#function to get x,y coordinates of mouse double click
+def draw_function(event, x, y, flags, params):
+	if event == cv2.EVENT_LBUTTONDBLCLK:
+		global b, g, r, xpos, ypos, clicked
+		clicked = True
+		xpos = x
+		ypos = y
+		b,g,r = img[y,x]
+		b = int(b)
+		g = int(g)
+		r = int(r)
 
-# Sphinx documentation
-docs/_build/
+# creating window
+cv2.namedWindow('image')
+cv2.setMouseCallback('image', draw_function)
 
-# PyBuilder
-target/
+while True:
+	cv2.imshow('image', img)
+	if clicked:
+		#cv2.rectangle(image, startpoint, endpoint, color, thickness)-1 fills entire rectangle 
+		cv2.rectangle(img, (20,20), (600,60), (b,g,r), -1)
 
-# Jupyter Notebook
-.ipynb_checkpoints
+		#Creating text string to display( Color name and RGB values )
+		text = get_color_name(r,g,b) + ' R=' + str(r) + ' G=' + str(g) + ' B=' + str(b)
+		#cv2.putText(img,text,start,font(0-7),fontScale,color,thickness,lineType )
+		cv2.putText(img, text, (50,50), 2,0.8, (255,255,255),2,cv2.LINE_AA)
 
-# IPython
-profile_default/
-ipython_config.py
+		#For very light colours we will display text in black colour
+		if r+g+b >=600:
+			cv2.putText(img, text, (50,50), 2,0.8, (0,0,0),2,cv2.LINE_AA)
 
-# pyenv
-.python-version
+	if cv2.waitKey(20) & 0xFF == 27:
+		break
 
-# pipenv
-#   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
-#   However, in case of collaboration, if having platform-specific dependencies or dependencies
-#   having no cross-platform support, pipenv may install dependencies that don't work, or not
-#   install all needed dependencies.
-#Pipfile.lock
+cv2.destroyAllWindows()
 
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow
-__pypackages__/
-
-# Celery stuff
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
